@@ -118,7 +118,7 @@ public class TapEntity extends MotionEntity {
 
         this.mTapPaint = new Paint();
         this.mTapPaint.setColor(this.mStrokeColor);
-        this.mTapPaint.setStrokeWidth(this.mStrokeWidth / getLayer().getScale());
+        this.mTapPaint.setStrokeWidth((this.mStrokeWidth * 0.5f) / getLayer().getScale());
 
         // TODO: Tap Border gets pixelated because it's just done once (initially)!
         this.mTapPaint.setAntiAlias(true);
