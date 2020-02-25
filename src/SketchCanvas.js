@@ -10,7 +10,8 @@ import ReactNative, {
   PixelRatio,
   Platform,
   ViewPropTypes,
-  processColor
+  processColor,
+  Dimensions,
 } from 'react-native'
 import { requestPermissions } from './handlePermissions';
 
@@ -32,12 +33,25 @@ class SketchCanvas extends React.Component {
     onStrokeChanged: PropTypes.func,
     onStrokeEnd: PropTypes.func,
     onSketchSaved: PropTypes.func,
+    onShapeSelectionChanged: PropTypes.func,
+    shapeConfiguration: PropTypes.shape({
+      shapeBorderColor: PropTypes.string,
+      shapeBorderStyle: PropTypes.string,
+      shapeBorderStrokeWidth: PropTypes.number,
+      shapeColor: PropTypes.string,
+      shapeStrokeWidth: PropTypes.number
+    }),
     user: PropTypes.string,
     zoomLevel: PropTypes.number,
 
     touchEnabled: PropTypes.bool,
 
     lineEnabled: PropTypes.bool,
+    shapeEnabled: PropTypes.bool,
+
+    lastX: PropTypes.number,
+    lastY: PropTypes.number,
+    distanceLeft: PropTypes.number,
 
     text: PropTypes.arrayOf(PropTypes.shape({
       text: PropTypes.string,
@@ -66,6 +80,14 @@ class SketchCanvas extends React.Component {
     onStrokeChanged: () => { },
     onStrokeEnd: () => { },
     onSketchSaved: () => { },
+    onShapeSelectionChanged: () => {},
+    shapeConfiguration: {
+      shapeBorderColor: "transparent",
+      shapeBorderStyle: "Dashed",
+      shapeBorderStrokeWidth: 1,
+      shapeColor: "#000000",
+      shapeStrokeWidth: 3,
+    },
     user: null,
     zoomLevel: 1,
 
@@ -90,6 +112,12 @@ class SketchCanvas extends React.Component {
     isFirstPoint: false,
     firstPointPathId: null,
     prevPointPathId: null,
+    hasPanResponder: false,
+    layoutWidth: 0,
+    layoutHeight: 0,
+    zoomLayoutWidth: 0,
+    zoomLayoutHeight: 0,
+    isShapeSelected: false,
   }
 
   constructor(props) {
@@ -103,18 +131,48 @@ class SketchCanvas extends React.Component {
     this._size = { width: 0, height: 0 }
     this._initialized = false
 
-    this.state.text = this._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null)
+    this.state = {
+      text: SketchCanvas.processText(props.text ? props.text.map((t) => Object.assign({}, t)) : null),
+      hasPanResponder: false
+    };
+
+    this.handleShapeSelect = this.handleShapeSelect.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      text: this._processText(nextProps.text ? nextProps.text.map(t => Object.assign({}, t)) : null)
-    })
+  handleShapeSelect = () => {
+    if (!this.props.isShapeSelected) {
+      this.setState({
+        isShapeSelected: false,
+      });
+    }
   }
 
-  _processText(text) {
-    text && text.forEach(t => t.fontColor = processColor(t.fontColor))
-    return text
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if(!nextProps.shapeEnabled) {
+      return {
+        isShapeSelected: nextProps.shapeEnabled
+      };
+    }
+    if (nextProps.text) {
+      return {
+        text: ImageEditor.processText(nextProps.text ? nextProps.text.map((t) => Object.assign({}, t)) : null)
+      };
+    } else {
+      return null;
+    }
+  }
+
+  static processText(text) {
+    text && text.forEach((t) => (t.fontColor = processColor(t.fontColor)));
+    return text;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.text !== this.state.text) {
+      this.setState({
+        text: this.state.text
+      });
+    }
   }
 
   clear() {
@@ -123,14 +181,30 @@ class SketchCanvas extends React.Component {
     UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.clear, [])
   }
 
-  undo() {
-    let lastId = -1;
-    this._paths.forEach(d => lastId = d.drawer === this.props.user ? d.path.id : lastId)
-    if (lastId >= 0) {
-      this.deletePath(lastId)
-    }
+  deleteSelectedShape() {
+    UIManager.dispatchViewManagerCommand(
+        this._handle,
+        UIManager.getViewManagerConfig(RNSketchCanvas).Commands.deleteSelectedShape,
+        []
+    );
+  }
 
-    return lastId
+  undo() {
+    const paths = this._paths ? this._paths : null
+    const lastElement = paths && this._paths.length > 0 ? this._paths.length - 1 : null
+    const isShape = lastElement != null ? paths[lastElement].path.isShape : false
+    if (!isShape) {
+      let lastId = -1;
+      this._paths.forEach(d => lastId = d.drawer === this.props.user ? d.path.id : lastId)
+      if (lastId >= 0) {
+        this.deletePath(lastId)
+      }
+
+      return lastId
+    } else {
+      this._paths = this._paths.filter(p => p.path.id !== this._paths[lastElement].path.id)
+      this.deleteSelectedShape()
+    }
   }
 
   addPath(data) {
@@ -153,6 +227,70 @@ class SketchCanvas extends React.Component {
     UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.deletePath, [id])
   }
 
+  addShape(config) {
+    if (config) {
+      const pathId = parseInt(Math.random() * 100000000)
+      let fontSize = config.textShapeFontSize ? config.textShapeFontSize : 0;
+
+      if(this.props.zoomLevel > 1) {
+        const distanceX = ((this.state.layoutWidth + this.props.distanceLeft + this.props.distanceRight) / 2) - this.props.distanceLeft
+        const distanceY = ((this.state.layoutHeight + this.props.distanceTop + this.props.distanceBottom) / 2) - this.props.distanceTop
+        const newCenterX = parseFloat((distanceX).toFixed(2) * this._screenScale)
+        const newCenterY = parseFloat((distanceY).toFixed(2) * this._screenScale)
+        UIManager.dispatchViewManagerCommand(
+            this._handle,
+            UIManager.getViewManagerConfig(RNSketchCanvas).Commands.addShape,
+            [config.shapeType, config.textShapeFontType, fontSize, config.textShapeText, config.imageShapeAsset, newCenterX, newCenterY, this.props.zoomLevel]
+        );
+        this._paths.push({
+          path: {
+            id: pathId,
+            isShape: true,
+          },
+        })
+        // this._paths.push({ path: this._path, size: this._size, drawer: this.props.user })
+      } else {
+        const centerX = (parseFloat((this.state.layoutWidth)).toFixed(2) * this._screenScale) / 2
+        const centerY = (parseFloat((this.state.layoutHeight)).toFixed(2) * this._screenScale) / 2
+        UIManager.dispatchViewManagerCommand(
+            this._handle,
+            UIManager.getViewManagerConfig(RNSketchCanvas).Commands.addShape,
+            [config.shapeType, config.textShapeFontType, fontSize, config.textShapeText, config.imageShapeAsset, centerX, centerY, this.props.zoomLevel]
+        );
+        this._paths.push({
+          path: {
+            id: pathId,
+            isShape: true,
+          },
+        })
+      }
+    }
+  }
+
+  increaseSelectedShapeFontsize() {
+    UIManager.dispatchViewManagerCommand(
+        this._handle,
+        UIManager.getViewManagerConfig(RNSketchCanvas).Commands.increaseShapeFontsize,
+        []
+    );
+  }
+
+  decreaseSelectedShapeFontsize() {
+    UIManager.dispatchViewManagerCommand(
+        this._handle,
+        UIManager.getViewManagerConfig(RNSketchCanvas).Commands.decreaseShapeFontsize,
+        []
+    );
+  }
+
+  changeSelectedShapeText(newText) {
+    UIManager.dispatchViewManagerCommand(
+        this._handle,
+        UIManager.getViewManagerConfig(RNSketchCanvas).Commands.changeShapeText,
+        [newText]
+    );
+  }
+
   save(imageType, transparent, folder, filename, includeImage, includeText, cropToImageSize) {
     UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.save, [imageType, folder, filename, transparent, includeImage, includeText, cropToImageSize])
   }
@@ -169,7 +307,11 @@ class SketchCanvas extends React.Component {
     }
   }
 
-  componentWillMount() {
+  async componentDidMount() {
+    const isStoragePermissionAuthorized = await requestPermissions(
+        this.props.permissionDialogTitle,
+        this.props.permissionDialogMessage,
+    );
     this.panResponder = PanResponder.create({
       // Ask to be the responder:
       onStartShouldSetPanResponder: (evt, gestureState) => true,
@@ -183,7 +325,8 @@ class SketchCanvas extends React.Component {
         this._offset = { x: e.pageX - e.locationX, y: e.pageY - e.locationY }
         this._path = {
           id: parseInt(Math.random() * 100000000), color: this.props.strokeColor,
-          width: this.props.strokeWidth, data: []
+          width: this.props.strokeWidth, data: [],
+          isShape: false,
         }
 
         UIManager.dispatchViewManagerCommand(
@@ -202,7 +345,8 @@ class SketchCanvas extends React.Component {
                 UIManager.RNSketchCanvas.Commands.addPoint,
                 [
                   parseFloat((gestureState.x0 - this._offset.x).toFixed(2) * this._screenScale),
-                  parseFloat((gestureState.y0 - this._offset.y).toFixed(2) * this._screenScale)
+                  parseFloat((gestureState.y0 - this._offset.y).toFixed(2) * this._screenScale),
+                  false
                 ]
             )
             this.setState({
@@ -230,7 +374,8 @@ class SketchCanvas extends React.Component {
           if (this._path) {
             UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPoint, [
               prevX,
-              prevY
+              prevY,
+              true,
             ])
             const x = parseFloat((gestureState.moveX - this._offset.x).toFixed(2)),
                 y = parseFloat((gestureState.moveY - this._offset.y).toFixed(2))
@@ -261,12 +406,14 @@ class SketchCanvas extends React.Component {
               )
               UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPoint, [
                 this.state.previewX,
-                this.state.previewY
+                this.state.previewY,
+                true
               ])
             }
             UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPoint, [
               prevX,
-              prevY
+              prevY,
+              true
             ])
             this.setState({
               prevPathId: this._path.id,
@@ -307,17 +454,20 @@ class SketchCanvas extends React.Component {
               })
               UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPoint, [
                 prevX,
-                prevY
+                prevY,
+                false
               ])
             }
             else {
               UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPoint, [
                 this.state.prevX,
-                this.state.prevY
+                this.state.prevY,
+                false
               ])
               UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPoint, [
                 prevX,
-                prevY
+                prevY,
+                false
               ])
               this.deletePath(this.state.prevPointPathId)
               this.setState({
@@ -329,7 +479,18 @@ class SketchCanvas extends React.Component {
         }
         if (this._path) {
           this.props.onStrokeEnd({ path: this._path, size: this._size, drawer: this.props.user })
-          this._paths.push({ path: this._path, size: this._size, drawer: this.props.user })
+          const lastPathI = this._paths.length - 1
+          const paths = this._paths[lastPathI] || {}
+          const isShape = this._paths.length > 0 ? paths.path.isShape : false
+          if (!this.state.isShapeSelected) {
+            if (isShape === false) {
+              this._paths.push({ path: this._path, size: this._size, drawer: this.props.user })
+            } else {
+              if (!this.props.shapeEnabled) {
+                this._paths.push({ path: this._path, size: this._size, drawer: this.props.user })
+              }
+            }
+          }
         }
         UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.endPath, [])
 
@@ -349,40 +510,50 @@ class SketchCanvas extends React.Component {
     });
   }
 
-  async componentDidMount() {
-    const isStoragePermissionAuthorized = await requestPermissions(
-        this.props.permissionDialogTitle,
-        this.props.permissionDialogMessage,
-    );
-  }
-
   render() {
     return (
-      <RNSketchCanvas
-          ref={ref => {
-            this._handle = ReactNative.findNodeHandle(ref)
-          }}
-          style={this.props.style}
-          onLayout={e => {
-            this._size = { width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height }
-            this._initialized = true
-            this._pathsToProcess.length > 0 && this._pathsToProcess.forEach(p => this.addPath(p))
-          }}
-          {...this.panResponder.panHandlers}
-          onChange={(e) => {
-            if (e.nativeEvent.hasOwnProperty('pathsUpdate')) {
-              this.props.onPathsChange(e.nativeEvent.pathsUpdate)
-            } else if (e.nativeEvent.hasOwnProperty('success') && e.nativeEvent.hasOwnProperty('path')) {
-              this.props.onSketchSaved(e.nativeEvent.success, e.nativeEvent.path)
-            } else if (e.nativeEvent.hasOwnProperty('success')) {
-              this.props.onSketchSaved(e.nativeEvent.success)
-            }
-          }}
-          localSourceImage={this.props.localSourceImage}
-          permissionDialogTitle={this.props.permissionDialogTitle}
-          permissionDialogMessage={this.props.permissionDialogMessage}
-          text={this.state.text}
-      />
+        <RNSketchCanvas
+            ref={(ref) => {
+              this._handle = ReactNative.findNodeHandle(ref);
+            }}
+            style={this.props.style}
+            onLayout={(e) => {
+              this.setState({
+                layoutWidth: e.nativeEvent.layout.width,
+                layoutHeight: e.nativeEvent.layout.height,
+              })
+              this._size = { width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height };
+              this._initialized = true;
+              this._pathsToProcess.length > 0 && this._pathsToProcess.forEach((p) => this.addPath(p));
+            }}
+            {...(this.state.hasPanResponder ? this.panResponder.panHandlers : undefined)}
+            {...this.panResponder?.panHandlers}
+            onChange={(e) => {
+              if (e.nativeEvent.hasOwnProperty("pathsUpdate")) {
+                this.props.onPathsChange(e.nativeEvent.pathsUpdate);
+              } else if (e.nativeEvent.hasOwnProperty("success") && e.nativeEvent.hasOwnProperty("path")) {
+                this.props.onSketchSaved(e.nativeEvent.success, e.nativeEvent.path);
+              } else if (e.nativeEvent.hasOwnProperty("success")) {
+                this.props.onSketchSaved(e.nativeEvent.success);
+              } else if (e.nativeEvent.hasOwnProperty("isShapeSelected")) {
+                this.setState({
+                  isShapeSelected: e.nativeEvent.isShapeSelected,
+                });
+                this.props.onShapeSelectionChanged(e.nativeEvent.isShapeSelected);
+              }
+            }}
+            localSourceImage={this.props.localSourceImage}
+            permissionDialogTitle={this.props.permissionDialogTitle}
+            permissionDialogMessage={this.props.permissionDialogMessage}
+            shapeConfiguration={{
+              shapeBorderColor: processColor(this.props.shapeConfiguration.shapeBorderColor),
+              shapeBorderStyle: this.props.shapeConfiguration.shapeBorderStyle,
+              shapeBorderStrokeWidth: this.props.shapeConfiguration.shapeBorderStrokeWidth,
+              shapeColor: processColor(this.props.strokeColor),
+              shapeStrokeWidth: this.props.shapeConfiguration.shapeStrokeWidth,
+            }}
+            text={this.state.text}
+        />
     );
   }
 }
