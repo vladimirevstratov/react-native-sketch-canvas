@@ -859,16 +859,13 @@ public class SketchCanvas extends View {
 
     public void releaseSelectedEntity() {
         MotionEntity toRemoveEntity = null;
-        Log.d("ReactNative", "mEntities " + mEntities);
 
         //Удаляем последний entity
         int size = mEntities.size();
-        Log.d("ReactNative", "size " + size);
 
         if(size > 0) {
             int i = size - 1; // индекс последнего entity
             toRemoveEntity = mEntities.get(i); // достаем из массива entity по индексу
-            Log.d("ReactNative", "toRemoveEntity " + toRemoveEntity);
 
         }
         //Удаляем последний entity
