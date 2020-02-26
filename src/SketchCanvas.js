@@ -48,7 +48,6 @@ class SketchCanvas extends React.Component {
 
     lineEnabled: PropTypes.bool,
     shapeEnabled: PropTypes.bool,
-    //lastShapeSelected: PropTypes.object,
 
     lastX: PropTypes.number,
     lastY: PropTypes.number,
