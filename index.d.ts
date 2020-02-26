@@ -92,6 +92,8 @@ export class SketchCanvas extends React.Component<SketchCanvasProps & ViewProper
   undo(): number
   addPath(data: Path): void
   deletePath(id: number): void
+  unselectShape(): void
+  addShape({shapeType: string}): void
 
   /**
    * @param imageType "png" or "jpg"
@@ -156,8 +158,8 @@ export interface RNSketchCanvasProps {
   text?: CanvasText[]
   /**
    * {
-   *    path: string, 
-   *    directory: string, 
+   *    path: string,
+   *    directory: string,
    *    mode: 'AspectFill' | 'AspectFit' | 'ScaleToFill'
    * }
    */

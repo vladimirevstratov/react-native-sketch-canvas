@@ -42,6 +42,7 @@ public class SketchCanvasManager extends SimpleViewManager<SketchCanvas> {
     public static final int COMMAND_INCREASE_SHAPE_FONTSIZE = 10;
     public static final int COMMAND_DECREASE_SHAPE_FONTSIZE = 11;
     public static final int COMMAND_CHANGE_SHAPE_TEXT = 12;
+    public static final int UNSELECT_SHAPE = 13;
 
     public static SketchCanvas Canvas = null;
 
@@ -95,6 +96,7 @@ public class SketchCanvasManager extends SimpleViewManager<SketchCanvas> {
         map.put("save", COMMAND_SAVE);
         map.put("endPath", COMMAND_END_PATH);
         map.put("deleteSelectedShape", COMMAND_DELETE_SELECTED_SHAPE);
+        map.put("unselectShape", UNSELECT_SHAPE);
         map.put("addShape", COMMAND_ADD_SHAPE);
         map.put("increaseShapeFontsize", COMMAND_INCREASE_SHAPE_FONTSIZE);
         map.put("decreaseShapeFontsize", COMMAND_DECREASE_SHAPE_FONTSIZE);
@@ -147,6 +149,10 @@ public class SketchCanvasManager extends SimpleViewManager<SketchCanvas> {
             }
             case COMMAND_DELETE_SELECTED_SHAPE: {
                 view.releaseSelectedEntity();
+                return;
+            }
+            case UNSELECT_SHAPE: {
+                view.unselectEntity();
                 return;
             }
             case COMMAND_ADD_SHAPE: {

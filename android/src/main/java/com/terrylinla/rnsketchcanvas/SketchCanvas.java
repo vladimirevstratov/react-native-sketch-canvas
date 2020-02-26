@@ -627,6 +627,14 @@ public class SketchCanvas extends View {
         }
     }
 
+    protected void unselectEntity() {
+            if (mSelectedEntity != null) {
+                mSelectedEntity.setIsSelected(false);
+                mSelectedEntity = null;
+            }
+            invalidateCanvas(true);
+        }
+
     protected void addTapEntity(float moveCenterX, float moveCenterY, float zoomLevel) {
         Layer tapLayer = new Layer();
         TapEntity tapEntity = null;
@@ -950,13 +958,13 @@ public class SketchCanvas extends View {
     };
 
     private class TapsListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
+        /*@Override
         public boolean onDoubleTap(MotionEvent e) {
             if (mSelectedEntity != null) {
                 return true;
             }
             return false;
-        }
+        }*/
 
         @Override
         public void onLongPress(MotionEvent e) {
@@ -964,13 +972,13 @@ public class SketchCanvas extends View {
             // updateOnLongPress(e);
         }
 
-        @Override
+        /*@Override
         public boolean onSingleTapUp(MotionEvent e) {
             // Update mSelectedEntity.
             // Fires onShapeSelectionChanged (JS-PanResponder enabling/disabling)
             updateSelectionOnTap(e);
             return true;
-        }
+        }*/
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
