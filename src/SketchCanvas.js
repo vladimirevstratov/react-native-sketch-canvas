@@ -199,12 +199,15 @@ class SketchCanvas extends React.Component {
       if (lastId >= 0) {
         this.deletePath(lastId)
       }
-
       return lastId
     } else {
       this._paths = this._paths.filter(p => p.path.id !== this._paths[lastElement].path.id)
       this.deleteSelectedShape()
     }
+  }
+
+  unselectShape() {
+    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.unselectShape, [])
   }
 
   addPath(data) {
@@ -248,7 +251,6 @@ class SketchCanvas extends React.Component {
             isShape: true,
           },
         })
-        // this._paths.push({ path: this._path, size: this._size, drawer: this.props.user })
       } else {
         const centerX = (parseFloat((this.state.layoutWidth)).toFixed(2) * this._screenScale) / 2
         const centerY = (parseFloat((this.state.layoutHeight)).toFixed(2) * this._screenScale) / 2
@@ -328,6 +330,7 @@ class SketchCanvas extends React.Component {
           width: this.props.strokeWidth, data: [],
           isShape: false,
         }
+
 
         UIManager.dispatchViewManagerCommand(
             this._handle,
@@ -482,6 +485,7 @@ class SketchCanvas extends React.Component {
           const lastPathI = this._paths.length - 1
           const paths = this._paths[lastPathI] || {}
           const isShape = this._paths.length > 0 ? paths.path.isShape : false
+
           if (!this.state.isShapeSelected) {
             if (isShape === false) {
               this._paths.push({ path: this._path, size: this._size, drawer: this.props.user })

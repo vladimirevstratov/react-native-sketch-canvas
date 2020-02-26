@@ -601,19 +601,19 @@ public class SketchCanvas extends View {
                 addTapEntity(moveCenterX, moveCenterY, zoomLevel);
                 break;
             case CIRCLE:
-                addCircleEntity();
+                addCircleEntity(moveCenterX, moveCenterY, zoomLevel);
                 break;
             case TEXT:
                 addTextEntity(textShapeFontType, textShapeFontSize, textShapeText);
                 break;
             case RECT:
-                addRectEntity(600, 300);
+                addRectEntity(600, 300, moveCenterX, moveCenterY, zoomLevel);
                 break;
             case SQUARE:
-                addSquareEntity(600);
+                addSquareEntity(600, moveCenterX, moveCenterY, zoomLevel);
                 break;
             case TRIANGLE:
-                addTriangleEntity();
+                addTriangleEntity(moveCenterX, moveCenterY, zoomLevel);
                 break;
             case ARROW:
                 addArrowEntity();
@@ -622,12 +622,21 @@ public class SketchCanvas extends View {
                 // TODO: Doesn't exist yet
                 break;
             default:
-                addCircleEntity();
+                addCircleEntity(moveCenterX, moveCenterY, zoomLevel);
                 break;
         }
     }
 
-    protected void addTapEntity(float moveCenterX, float moveCenterY, float zoomLevel) {        Layer tapLayer = new Layer();
+    protected void unselectEntity() {
+            if (mSelectedEntity != null) {
+                mSelectedEntity.setIsSelected(false);
+                mSelectedEntity = null;
+            }
+            invalidateCanvas(true);
+        }
+
+    protected void addTapEntity(float moveCenterX, float moveCenterY, float zoomLevel) {
+        Layer tapLayer = new Layer();
         TapEntity tapEntity = null;
         //if (mSketchCanvas.getWidth() < 100 || mSketchCanvas.getHeight() < 100) {
             tapEntity = new TapEntity(tapLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
@@ -644,35 +653,30 @@ public class SketchCanvas extends View {
         invalidateCanvas(true);
     }
 
-    protected void addCircleEntity() {
+    protected void addCircleEntity(float moveCenterX, float moveCenterY, float zoomLevel) {
         Layer circleLayer = new Layer();
         CircleEntity circleEntity = null;
-        if (mSketchCanvas.getWidth() < 100 || mSketchCanvas.getHeight() < 100) {
-            circleEntity = new CircleEntity(circleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
-        } else {
-            circleEntity = new CircleEntity(circleLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
-        }
-        addEntityAndPosition(circleEntity, 1);
+        circleEntity = new CircleEntity(circleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+
+        addEntityAndPosition(circleEntity, zoomLevel);
 
         PointF center = circleEntity.absoluteCenter();
-        center.y = center.y * 0.5F;
+        center.x = moveCenterX;
+        center.y = moveCenterY;
         circleEntity.moveCenterTo(center);
 
         invalidateCanvas(true);
     }
 
-    protected void addTriangleEntity() {
+    protected void addTriangleEntity(float moveCenterX, float moveCenterY, float zoomLevel) {
         Layer triangleLayer = new Layer();
         TriangleEntity triangleEntity = null;
-        if (mSketchCanvas.getWidth() < 100 || mSketchCanvas.getHeight() < 100) {
-            triangleEntity = new TriangleEntity(triangleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 600, 20f, mEntityStrokeWidth, mEntityStrokeColor);
-        } else {
-            triangleEntity = new TriangleEntity(triangleLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), 600, 20f, mEntityStrokeWidth, mEntityStrokeColor);
-        }
-        addEntityAndPosition(triangleEntity, 1);
+        triangleEntity = new TriangleEntity(triangleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 600, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+        addEntityAndPosition(triangleEntity, zoomLevel);
 
         PointF center = triangleEntity.absoluteCenter();
-        center.y = center.y * 0.5F;
+        center.x = moveCenterX;
+        center.y = moveCenterY;
         triangleEntity.moveCenterTo(center);
 
         invalidateCanvas(true);
@@ -695,22 +699,19 @@ public class SketchCanvas extends View {
         invalidateCanvas(true);
     }
 
-    protected void addSquareEntity(int width) {
-        addRectEntity(width, width);
+    protected void addSquareEntity(int width, float moveCenterX, float moveCenterY, float zoomLevel) {
+        addRectEntity(width, width, moveCenterX, moveCenterY, zoomLevel);
     }
 
-    protected void addRectEntity(int width, int height) {
+    protected void addRectEntity(int width, int height, float moveCenterX, float moveCenterY, float zoomLevel) {
         Layer rectLayer = new Layer();
         RectEntity rectEntity = null;
-        if (mSketchCanvas.getWidth() < 100 || mSketchCanvas.getHeight() < 100) {
-            rectEntity = new RectEntity(rectLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), width, height, 30f, mEntityStrokeWidth, mEntityStrokeColor);
-        } else {
-            rectEntity = new RectEntity(rectLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), width, height, 30f, mEntityStrokeWidth, mEntityStrokeColor);
-        }
-        addEntityAndPosition(rectEntity, 1);
+        rectEntity = new RectEntity(rectLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), width, height, 30f, mEntityStrokeWidth, mEntityStrokeColor);
+        addEntityAndPosition(rectEntity, zoomLevel);
 
         PointF center = rectEntity.absoluteCenter();
-        center.y = center.y * 0.5F;
+        center.x = moveCenterX;
+        center.y = moveCenterY;
         rectEntity.moveCenterTo(center);
 
         invalidateCanvas(true);
@@ -858,16 +859,13 @@ public class SketchCanvas extends View {
 
     public void releaseSelectedEntity() {
         MotionEntity toRemoveEntity = null;
-        Log.d("ReactNative", "mEntities " + mEntities);
 
         //Удаляем последний entity
         int size = mEntities.size();
-        Log.d("ReactNative", "size " + size);
 
         if(size > 0) {
             int i = size - 1; // индекс последнего entity
             toRemoveEntity = mEntities.get(i); // достаем из массива entity по индексу
-            Log.d("ReactNative", "toRemoveEntity " + toRemoveEntity);
 
         }
         //Удаляем последний entity
@@ -957,13 +955,13 @@ public class SketchCanvas extends View {
     };
 
     private class TapsListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
+        /*@Override
         public boolean onDoubleTap(MotionEvent e) {
             if (mSelectedEntity != null) {
                 return true;
             }
             return false;
-        }
+        }*/
 
         @Override
         public void onLongPress(MotionEvent e) {
@@ -971,13 +969,13 @@ public class SketchCanvas extends View {
             // updateOnLongPress(e);
         }
 
-        @Override
+        /*@Override
         public boolean onSingleTapUp(MotionEvent e) {
             // Update mSelectedEntity.
             // Fires onShapeSelectionChanged (JS-PanResponder enabling/disabling)
             updateSelectionOnTap(e);
             return true;
-        }
+        }*/
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
