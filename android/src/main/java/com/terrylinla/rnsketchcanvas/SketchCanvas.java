@@ -186,14 +186,16 @@ public class SketchCanvas extends View {
 
     public void addPoint(float x, float y, boolean isMove) {
         if (mSelectedEntity == null && (findEntityAtPoint(x, y) == null || isMove)) {
-            Rect updateRect = mCurrentPath.addPoint(new PointF(x, y));
-            if (mCurrentPath.isTranslucent) {
-                mTranslucentDrawingCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
-                mCurrentPath.draw(mTranslucentDrawingCanvas);
-            } else {
-                mCurrentPath.drawLastPoint(mDrawingCanvas);
+            if (mCurrentPath != null) {
+                Rect updateRect = mCurrentPath.addPoint(new PointF(x, y));
+                if (mCurrentPath.isTranslucent) {
+                    mTranslucentDrawingCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
+                    mCurrentPath.draw(mTranslucentDrawingCanvas);
+                } else {
+                    mCurrentPath.drawLastPoint(mDrawingCanvas);
+                }
+                invalidate(updateRect);
             }
-            invalidate(updateRect);
         }
     }
 
