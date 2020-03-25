@@ -606,7 +606,7 @@ public class SketchCanvas extends View {
                 addCircleEntity(moveCenterX, moveCenterY, zoomLevel);
                 break;
             case TEXT:
-                addTextEntity(textShapeFontType, textShapeFontSize, textShapeText);
+                addTextEntity(textShapeFontType, textShapeFontSize, textShapeText, moveCenterX, moveCenterY, zoomLevel);
                 break;
             case RECT:
                 addRectEntity(600, 300, moveCenterX, moveCenterY, zoomLevel);
@@ -719,7 +719,7 @@ public class SketchCanvas extends View {
         invalidateCanvas(true);
     }
 
-    protected void addTextEntity(String fontType, int fontSize, String text) {
+    protected void addTextEntity(String fontType, int fontSize, String text, float moveCenterX, float moveCenterY, float zoomLevel) {
         TextLayer textLayer = createTextLayer(fontType, fontSize);
         if (text != null) {
             textLayer.setText(text);
@@ -733,10 +733,11 @@ public class SketchCanvas extends View {
         } else {
             textEntity = new TextEntity(textLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight());
         }
-        addEntityAndPosition(textEntity, 1);
+        addEntityAndPosition(textEntity, zoomLevel);
 
         PointF center = textEntity.absoluteCenter();
-        center.y = center.y * 0.5F;
+        center.x = moveCenterX;
+        center.y = moveCenterY;
         textEntity.moveCenterTo(center);
 
         invalidateCanvas(true);
@@ -777,7 +778,7 @@ public class SketchCanvas extends View {
             }
 
             initEntityBorder(entity);
-            initialTranslateAndScale(entity, zoomLevel);
+            initialTranslateAndScale(entity, (zoomLevel*1.6F));
             mEntities.add(entity);
             onShapeSelectionChanged(entity);
             selectEntity(entity);

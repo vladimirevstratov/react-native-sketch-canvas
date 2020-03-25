@@ -85,7 +85,7 @@ public class TextEntity extends MotionEntity {
                 layer.getText(), // - text which will be drawn
                 textPaint,
                 boundsWidth, // - width of the layout
-                Layout.Alignment.ALIGN_CENTER, // - layout alignment
+                Layout.Alignment.ALIGN_NORMAL, // - layout alignment
                 1, // 1 - text spacing multiply
                 1, // 1 - text spacing add
                 true); // true - include padding
