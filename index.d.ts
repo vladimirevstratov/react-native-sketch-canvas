@@ -93,7 +93,7 @@ export class SketchCanvas extends React.Component<SketchCanvasProps & ViewProper
   addPath(data: Path): void
   deletePath(id: number): void
   unselectShape(): void
-  addShape({shapeType: string, textShapeFontType: string, textShapeFontSize: number, textShapeText: string}): void
+  addShape({shapeType: string}): void
 
   /**
    * @param imageType "png" or "jpg"
