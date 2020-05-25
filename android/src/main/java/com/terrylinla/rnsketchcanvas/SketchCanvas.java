@@ -285,6 +285,7 @@ public class SketchCanvas extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        Log.d("ReactNative", ">onDraw");
         super.onDraw(canvas);
         mSketchCanvas = canvas;
 
@@ -630,21 +631,25 @@ public class SketchCanvas extends View {
     }
 
     protected void unselectEntity() {
-            if (mSelectedEntity != null) {
-                mSelectedEntity.setIsSelected(false);
-                mSelectedEntity = null;
-            }
-            invalidateCanvas(true);
+        if (mSelectedEntity != null) {
+            Log.d("ReactNative", "Должен произойти drawAllEntities");
+            drawAllEntities(mDrawingCanvas);
+            releaseSelectedEntity();
+
+            //mSelectedEntity.setIsSelected(false);
+            //mSelectedEntity = null;
         }
+        invalidateCanvas(true);
+    }
 
     protected void addTapEntity(float moveCenterX, float moveCenterY, float zoomLevel) {
         Layer tapLayer = new Layer();
         TapEntity tapEntity = null;
-        //if (mSketchCanvas.getWidth() < 100 || mSketchCanvas.getHeight() < 100) {
+        if (mSketchCanvas.getWidth() < 110 || mSketchCanvas.getHeight() < 110) {
             tapEntity = new TapEntity(tapLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
-        //} else {
-        //    tapEntity = new TapEntity(tapLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
-        //}
+        } else {
+            tapEntity = new TapEntity(tapLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+        }
         addEntityAndPosition(tapEntity, zoomLevel);
 
         PointF center = tapEntity.absoluteCenter();
@@ -658,7 +663,13 @@ public class SketchCanvas extends View {
     protected void addCircleEntity(float moveCenterX, float moveCenterY, float zoomLevel) {
         Layer circleLayer = new Layer();
         CircleEntity circleEntity = null;
-        circleEntity = new CircleEntity(circleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+        if (mSketchCanvas.getWidth() < 110 || mSketchCanvas.getHeight() < 110) {
+            Log.d("ReactNative", "mDrawingCanvas");
+            circleEntity = new CircleEntity(circleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+        } else {
+            Log.d("ReactNative", "mSketchCanvas");
+            circleEntity = new CircleEntity(circleLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+        }
 
         addEntityAndPosition(circleEntity, zoomLevel);
 
@@ -673,7 +684,12 @@ public class SketchCanvas extends View {
     protected void addTriangleEntity(float moveCenterX, float moveCenterY, float zoomLevel) {
         Layer triangleLayer = new Layer();
         TriangleEntity triangleEntity = null;
-        triangleEntity = new TriangleEntity(triangleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 600, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+        if (mSketchCanvas.getWidth() < 110 || mSketchCanvas.getHeight() < 110) {
+            triangleEntity = new TriangleEntity(triangleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 600, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+        } else {
+            triangleEntity = new TriangleEntity(triangleLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), 600, 20f, mEntityStrokeWidth, mEntityStrokeColor);
+        }
+
         addEntityAndPosition(triangleEntity, zoomLevel);
 
         PointF center = triangleEntity.absoluteCenter();
@@ -687,7 +703,7 @@ public class SketchCanvas extends View {
     protected void addArrowEntity() {
         Layer arrowLayer = new Layer();
         ArrowEntity arrowEntity = null;
-        if (mSketchCanvas.getWidth() < 100 || mSketchCanvas.getHeight() < 100) {
+        if (mSketchCanvas.getWidth() < 110 || mSketchCanvas.getHeight() < 110) {
             arrowEntity = new ArrowEntity(arrowLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 600, 600, 20f, mEntityStrokeWidth, mEntityStrokeColor);
         } else {
             arrowEntity = new ArrowEntity(arrowLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), 600, 600, 20f, mEntityStrokeWidth, mEntityStrokeColor);
@@ -708,7 +724,11 @@ public class SketchCanvas extends View {
     protected void addRectEntity(int width, int height, float moveCenterX, float moveCenterY, float zoomLevel) {
         Layer rectLayer = new Layer();
         RectEntity rectEntity = null;
-        rectEntity = new RectEntity(rectLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), width, height, 30f, mEntityStrokeWidth, mEntityStrokeColor);
+        if (mSketchCanvas.getWidth() < 110 || mSketchCanvas.getHeight() < 110) {
+            rectEntity = new RectEntity(rectLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), width, height, 30f, mEntityStrokeWidth, mEntityStrokeColor);
+        } else {
+            rectEntity = new RectEntity(rectLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), width, height, 30f, mEntityStrokeWidth, mEntityStrokeColor);
+        }
         addEntityAndPosition(rectEntity, zoomLevel);
 
         PointF center = rectEntity.absoluteCenter();
@@ -728,7 +748,7 @@ public class SketchCanvas extends View {
         }
 
         TextEntity textEntity = null;
-        if (mSketchCanvas.getWidth() < 100 || mSketchCanvas.getHeight() < 100) {
+        if (mSketchCanvas.getWidth() < 110 || mSketchCanvas.getHeight() < 110) {
             textEntity = new TextEntity(textLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight());
         } else {
             textEntity = new TextEntity(textLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight());
@@ -869,7 +889,6 @@ public class SketchCanvas extends View {
         if(size > 0) {
             int i = size - 1; // индекс последнего entity
             toRemoveEntity = mEntities.get(i); // достаем из массива entity по индексу
-
         }
         //Удаляем последний entity
 
