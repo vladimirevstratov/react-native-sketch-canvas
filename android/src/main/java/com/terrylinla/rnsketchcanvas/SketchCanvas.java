@@ -285,7 +285,6 @@ public class SketchCanvas extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        Log.d("ReactNative", ">onDraw");
         super.onDraw(canvas);
         mSketchCanvas = canvas;
 
@@ -632,7 +631,6 @@ public class SketchCanvas extends View {
 
     protected void unselectEntity() {
         if (mSelectedEntity != null) {
-            Log.d("ReactNative", "Должен произойти drawAllEntities");
             drawAllEntities(mDrawingCanvas);
             releaseSelectedEntity();
 
@@ -664,10 +662,8 @@ public class SketchCanvas extends View {
         Layer circleLayer = new Layer();
         CircleEntity circleEntity = null;
         if (mSketchCanvas.getWidth() < 110 || mSketchCanvas.getHeight() < 110) {
-            Log.d("ReactNative", "mDrawingCanvas");
             circleEntity = new CircleEntity(circleLayer, mDrawingCanvas.getWidth(), mDrawingCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
         } else {
-            Log.d("ReactNative", "mSketchCanvas");
             circleEntity = new CircleEntity(circleLayer, mSketchCanvas.getWidth(), mSketchCanvas.getHeight(), 300, 20f, mEntityStrokeWidth, mEntityStrokeColor);
         }
 
@@ -894,8 +890,6 @@ public class SketchCanvas extends View {
 
         /*for (MotionEntity entity : mEntities) {
             if (entity.isSelected()) {
-                Log.d("ReactNative", "SelectedEntity " + entity);
-                Log.d("ReactNative", "mEntities " + mEntities);
                 toRemoveEntity = entity;
                 break;
             }
