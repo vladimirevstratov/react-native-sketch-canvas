@@ -90,6 +90,7 @@ public class SketchCanvas extends View {
     private ThemedReactContext mContext;
     private boolean mDisableHardwareAccelerated = false;
     private boolean mNeedsFullRedraw = true;
+    private boolean mIsErase = false;
 
     public SketchCanvas(ThemedReactContext context) {
         super(context);
@@ -173,6 +174,9 @@ public class SketchCanvas extends View {
         mCurrentPath = new SketchData(id, strokeColor, strokeWidth);
         if (strokeColor != Color.TRANSPARENT) {
             mEntityStrokeColor = strokeColor;
+            mIsErase = false;
+        } else {
+            mIsErase = true;
         }
         mEntityStrokeWidth = Utility.convertPxToDpAsFloat(mContext.getResources().getDisplayMetrics(), strokeWidth);
         mPaths.add(mCurrentPath);
@@ -631,11 +635,8 @@ public class SketchCanvas extends View {
 
     protected void unselectEntity() {
         if (mSelectedEntity != null) {
-            drawAllEntities(mDrawingCanvas);
-            releaseSelectedEntity();
-
-            //mSelectedEntity.setIsSelected(false);
-            //mSelectedEntity = null;
+            mSelectedEntity.setIsSelected(false);
+            mSelectedEntity = null;
         }
         invalidateCanvas(true);
     }
@@ -985,13 +986,16 @@ public class SketchCanvas extends View {
             // updateOnLongPress(e);
         }
 
-        /*@Override
+        // TODO активировать тап, только если включен инструмент резинки
+        @Override
         public boolean onSingleTapUp(MotionEvent e) {
             // Update mSelectedEntity.
             // Fires onShapeSelectionChanged (JS-PanResponder enabling/disabling)
-            updateSelectionOnTap(e);
+            if (mIsErase) {
+                updateSelectionOnTap(e);
+            }
             return true;
-        }*/
+        }
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
