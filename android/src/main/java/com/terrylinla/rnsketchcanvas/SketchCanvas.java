@@ -631,11 +631,8 @@ public class SketchCanvas extends View {
 
     protected void unselectEntity() {
         if (mSelectedEntity != null) {
-            drawAllEntities(mDrawingCanvas);
-            releaseSelectedEntity();
-
-            //mSelectedEntity.setIsSelected(false);
-            //mSelectedEntity = null;
+            mSelectedEntity.setIsSelected(false);
+            mSelectedEntity = null;
         }
         invalidateCanvas(true);
     }
