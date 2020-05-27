@@ -70,6 +70,7 @@ public class SketchCanvas extends View {
     private float mEntityBorderStrokeWidth = 1;
     private float mEntityStrokeWidth = 5;
     private int mEntityStrokeColor = Color.BLACK;
+    private float mEraseEntityStrokeWidth = 3;
 
     // Text
     private ArrayList<CanvasText> mArrCanvasText = new ArrayList<CanvasText>();
@@ -815,7 +816,11 @@ public class SketchCanvas extends View {
     private void drawAllEntities(Canvas canvas) {
         Paint paint = new Paint();
         paint.setColor(mEntityStrokeColor);
-        paint.setStrokeWidth(mEntityStrokeWidth);
+        if (!mIsErase) {
+           paint.setStrokeWidth(mEntityStrokeWidth);
+        } else {
+           paint.setStrokeWidth(mEraseEntityStrokeWidth);
+        }
 
         for (int i = 0; i < mEntities.size(); i++) {
             mEntities.get(i).draw(canvas, paint);
@@ -878,7 +883,6 @@ public class SketchCanvas extends View {
     }
 
     public void releaseSelectedEntity(boolean isUndoShape) {
-        Log.d("ReactNative", "isUndoShape" + Boolean.toString(isUndoShape));
         MotionEntity toRemoveEntity = null;
 
         if (isUndoShape) {
@@ -992,7 +996,6 @@ public class SketchCanvas extends View {
         public boolean onSingleTapUp(MotionEvent e) {
             // Update mSelectedEntity.
             // Fires onShapeSelectionChanged (JS-PanResponder enabling/disabling)
-            Log.d("ReactNative", Boolean.toString(mIsErase));
             if (mIsErase) {
                 updateSelectionOnTap(e);
             }
