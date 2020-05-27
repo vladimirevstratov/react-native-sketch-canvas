@@ -181,11 +181,11 @@ class SketchCanvas extends React.Component {
     UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.clear, [])
   }
 
-  deleteSelectedShape() {
+  deleteSelectedShape(isUndoShape) {
     UIManager.dispatchViewManagerCommand(
         this._handle,
         UIManager.getViewManagerConfig(RNSketchCanvas).Commands.deleteSelectedShape,
-        []
+        [isUndoShape]
     );
   }
 
@@ -201,8 +201,9 @@ class SketchCanvas extends React.Component {
       }
       return lastId
     } else {
+      const isUndoShape = true;
       this._paths = this._paths.filter(p => p.path.id !== this._paths[lastElement].path.id)
-      this.deleteSelectedShape()
+      this.deleteSelectedShape(isUndoShape);
     }
   }
 

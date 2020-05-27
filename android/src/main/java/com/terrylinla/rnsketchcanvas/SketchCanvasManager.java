@@ -148,7 +148,7 @@ public class SketchCanvasManager extends SimpleViewManager<SketchCanvas> {
                 return;
             }
             case COMMAND_DELETE_SELECTED_SHAPE: {
-                view.releaseSelectedEntity();
+                view.releaseSelectedEntity(args.getBoolean(0));
                 return;
             }
             case UNSELECT_SHAPE: {

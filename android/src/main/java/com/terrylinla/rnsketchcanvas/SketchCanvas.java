@@ -877,24 +877,25 @@ public class SketchCanvas extends View {
         selectEntity(entity);
     }
 
-    public void releaseSelectedEntity() {
+    public void releaseSelectedEntity(boolean isUndoShape) {
+        Log.d("ReactNative", "isUndoShape" + Boolean.toString(isUndoShape));
         MotionEntity toRemoveEntity = null;
 
-        //Удаляем последний entity
-        int size = mEntities.size();
+        if (isUndoShape) {
+            int size = mEntities.size();
 
-        if(size > 0) {
-            int i = size - 1; // индекс последнего entity
-            toRemoveEntity = mEntities.get(i); // достаем из массива entity по индексу
-        }
-        //Удаляем последний entity
-
-        /*for (MotionEntity entity : mEntities) {
-            if (entity.isSelected()) {
-                toRemoveEntity = entity;
-                break;
+            if(size > 0) {
+                int i = size - 1; // индекс последнего entity
+                toRemoveEntity = mEntities.get(i); // достаем из массива entity по индексу
             }
-        }*/
+        } else {
+            for (MotionEntity entity : mEntities) {
+                if (entity.isSelected()) {
+                    toRemoveEntity = entity;
+                    break;
+                }
+            }
+        }
 
         if (toRemoveEntity != null) {
             toRemoveEntity.setIsSelected(false);
@@ -991,6 +992,7 @@ public class SketchCanvas extends View {
         public boolean onSingleTapUp(MotionEvent e) {
             // Update mSelectedEntity.
             // Fires onShapeSelectionChanged (JS-PanResponder enabling/disabling)
+            Log.d("ReactNative", Boolean.toString(mIsErase));
             if (mIsErase) {
                 updateSelectionOnTap(e);
             }
