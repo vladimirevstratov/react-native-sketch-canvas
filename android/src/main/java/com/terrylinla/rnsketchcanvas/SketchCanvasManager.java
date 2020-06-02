@@ -114,7 +114,7 @@ public class SketchCanvasManager extends SimpleViewManager<SketchCanvas> {
     public void receiveCommand(SketchCanvas view, int commandType, @Nullable ReadableArray args) {
         switch (commandType) {
             case COMMAND_ADD_POINT: {
-                view.addPoint((float)args.getDouble(0), (float)args.getDouble(1), (boolean)args.getBoolean(2));
+                view.addPoint((float)args.getDouble(0), (float)args.getDouble(1), args.size()>=3 ? (boolean)args.getBoolean(2): true);
                 return;
             }
             case COMMAND_NEW_PATH: {
